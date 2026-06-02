@@ -1,22 +1,19 @@
 # drug-adverse-events-sql-analysis
 SQL analysis of a clinical dataset to identify drug safety risks and adverse events
-🎯 1. רקע ומטרת הפרויקט (Background & Objective)
 
-בעולם הרפואי והרגולטורי, ניטור בטיחות טיפול תרופתי (Pharmacovigilance) הוא קריטי, במיוחד כאשר מטופלים נוטלים מספר תרופות במקביל (Polypharmacy). פרויקט זה נועד לנתח מאגר נתונים קליני של 3,500 דיווחים על אירועים חריגים, לזהות אילו תרופות קשורות בסיכון הגבוה ביותר להופעת תופעות לוואי, ולהציף דגלים אדומים פוטנציאליים עבור גופי בריאות הציבור.
-🛠️ 2. האתגר הטכני וניקוי הנתונים (Data Engineering & Cleaning)
+**Background & Objective**
+In healthcare data science and pharmacovigilance, monitoring drug safety is paramount—particularly in polypharmacy scenarios where patients concurrently take multiple medications. This project analyzes a clinical dataset of patient records to identify which medications carry the highest risk of adverse events (AE) and to surface potential high-risk drug-drug interactions for public health and regulatory insights.
 
-בשלב זה מראים למגייסים איך פתרת את הבעיות המורכבות בדאטה:
+**Technical Challenges & Data Cleaning**
+To ensure data integrity and reliable statistical reporting, several advanced data engineering and cleaning steps were performed in SQL:
 
-    טרנספורמציה מבנית (Wide to Long): המאגר המקורי נבנה "לרוחב", כאשר התרופות מפוזרות על פני 4 עמודות שונות (drug_1 עד drug_4). כדי למנוע הטיה סטטיסטית ופיצול נתונים, נעשה שימוש ב-UNION ALL בתוך CTE כדי לאחד את כל עמודות התרופות לעמודה אחידה אחת (drug_name).
+**Structural Transformation (Wide-to-Long):** The original dataset was structured "horizontally," with concomitant medications split across four distinct columns (`drug_1` through `drug_4`). To prevent statistical bias and fragmentation, a **`UNION ALL`** operator within a **CTE (Common Table Expression)** was utilized to consolidate all medications into a single, unified column (`drug_name`).
 
-    ההבדל בין NULL לתא ריק (The Empty String Trap): במהלך הניתוח זוהתה אנומליה – תא ריק שהתברג בעשירייה המובילה בשל רישום חסר של תרופות אצל מטופלים. פקודת IS NOT NULL סטנדרטית לא סיננה אותו מכיוון שהמחשב זיהה אותו כמחרוזת ריקה (''). הקוד עודכן לסנן את שני המצבים במקביל, מה שהבטיח 100% שלמות ואיכות נתונים (Data Integrity).
+**The Empty String Trap (`NULL` vs. `''`):** During initial aggregation, an anomaly appeared where an "empty" row ranked in the top 10. This occurred because patients taking fewer than four drugs left remaining columns blank, which the system stored as empty strings (`''`) rather than true `NULL` values. The query was optimized to filter out both conditions (`WHERE drug_name IS NOT NULL AND drug_name != ''`), ensuring 100% data integrity.
 
-🧠 3. הלב של הפרויקט: הממצאים והסיפור הקליני (Clinical Insights)
+**Clinical Insights & Findings**
+The statistical analysis revealed clear clinical patterns rather than random distribution, strongly reflecting known pharmacological profiles and critical drug-drug interactions:
 
-כאן את מסבירה את אחוזי הסיכון שקפצו בשאילתה. אחוז הסיכון הממוצע במאגר נע סביב 19%-27% עבור התרופות השכיחות ביותר, אך ה"טופ 4" מציג תמונה פרמקולוגית מרתקת:
-
-    Phenelzine (במקום הראשון עם 26.81% סיכון): נוגד דיכאון ממשפחת ה-MAOI. מבחינה קלינית, מדובר בתרופה מהדור הישן הידועה בפרופיל בטיחותי מורכב, תופעות לוואי קשות ואינטראקציות רבות עם מזון ותרופות אחרות. נוכחותה בראש הרשימה הגיונית לחלוטין ומקפת מציאות רפואית מוכרת.
-
-    Aspirin (במקום השני עם 26.63% סיכון) ו-Warfarin (במקום הרביעי עם 25.96% סיכון): קומדין (Warfarin) הוא מדלל דם עם חלון תרפויטי צר מאוד. אספירין מעכב התקבצות טסיות. כאשר שתי התרופות הללו מופיעות במקביל בראש מדד הסיכון במאגר שמייצג ריבוי תרופות, עולה מיד חשד קליני כבד לסיכון מוגבר לדימומים (Bleeding Risk) כתוצאה מאינטראקציה ביניהן.
-
-    Fluoxetine (פרוזאק - במקום השלישי עם 26.17% סיכון): נוגד דיכאון ממשפחת ה-SSRI. השילוב של SSRI (כמו פרוזאק) יחד עם MAOI (כמו Phenelzine שנמצא במקום הראשון) הוא שילוב אסור בעולם הרפואה מפני שהוא עלול לגרום לתסמונת סרוטונין (Serotonin Syndrome) – מצב מסכן חיים.
+A. Phenelzine (Top Risk - 26.81%): As a Monoamine Oxidase Inhibitor (MAOI), Phenelzine is a first-generation antidepressant known for its complex safety profile, severe side effects, and extensive dietary and drug interactions. Its position at the top of the risk index aligns perfectly with clinical reality.
+B. Aspirin (26.63%) & Warfarin (25.96%): Warfarin is an anticoagulant with a narrow therapeutic window, while Aspirin is an antiplatelet agent. Seeing both highly prevalent in the adverse event risk index of a polypharmacy dataset strongly signals a high clinical risk of severe bleeding due to their combined mechanism.
+C Fluoxetine (26.17%):Fluoxetine is a Selective Serotonin Reuptake Inhibitor (SSRI). Concomitant use of an SSRI (Fluoxetine) and an MAOI (Phenelzine) is a major clinical contraindication due to the high risk of inducing **Serotonin Syndrome**, a potentially life-threatening condition.
