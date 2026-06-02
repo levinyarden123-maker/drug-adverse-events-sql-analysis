@@ -21,6 +21,7 @@ To ensure data integrity and reliable statistical reporting, several advanced da
       SUM(CASE WHEN drug_4 IS NULL THEN 1 ELSE 0 END) AS missing_drug_4_count,
       SUM(CASE WHEN adverse_event IS NULL THEN 1 ELSE 0 END) AS missing_adverse_event_count
   FROM drug_adverse_event_dataset;
+
 ---
 
 ## 🧠 3. Clinical Insights & Findings
@@ -30,11 +31,32 @@ The statistical analysis revealed clear clinical patterns rather than random dis
 2. **Aspirin (26.63%) & Warfarin (25.96%):** Warfarin is an anticoagulant with a narrow therapeutic window, while Aspirin is an antiplatelet agent. Seeing both highly prevalent in the adverse event risk index of a polypharmacy dataset strongly signals a high clinical risk of severe bleeding due to their combined mechanism.
 3. **Fluoxetine (26.17%):** Fluoxetine is a Selective Serotonin Reuptake Inhibitor (SSRI). Concomitant use of an SSRI (Fluoxetine) and an MAOI (Phenelzine) is a major clinical contraindication due to the high risk of inducing **Serotonin Syndrome**, a potentially life-threatening condition.
 
+### 👵 Age Stratification & Demographic Risk
+To further understand the risk distribution, a demographic analysis was performed by grouping patients into clinical age brackets using the following query:
+
+```sql
+SELECT 
+    CASE 
+        WHEN age < 18 THEN '1. Children (<18)'
+        WHEN age BETWEEN 18 AND 64 THEN '2. Adults (18-64)'
+        WHEN age >= 65 THEN '3. Elderly (65+)'
+        ELSE 'Unknown'
+    END AS age_group,
+    COUNT(*) AS total_reports,
+    SUM(CASE WHEN adverse_event = 1 THEN 1 ELSE 0 END) AS adverse_event_cases,
+    ROUND(SUM(CASE WHEN adverse_event = 1 THEN 1.0 ELSE 0 END) / COUNT(*) * 100, 2) AS risk_percentage
+FROM drug_adverse_event_dataset
+GROUP BY age_group
+ORDER BY age_group;
+```
+
+* **Elderly Patients (65+)**: Exhibited the highest adverse event risk at 27.67%. This significantly higher rate aligns with geriatric pharmacology, where polypharmacy, altered pharmacokinetics (reduced renal/hepatic clearance), and drug-drug interactions heavily compromise patient safety.
+
+* **Adults (18-64)**: Demonstrated a notably lower risk rate of 16.67%.
+
+* **Pediatric Data Absence**: The query returned no records for children under 18, establishing that this clinical dataset focuses exclusively on adult and geriatric populations
+
 ### 💡 Analyst's Takeaway
 The data demonstrates that the captured adverse events are heavily concentrated around high-risk therapeutic classes—specifically cardiovascular management (anticoagulants/antiplatelets) and mental health (antidepressants). 
 
 ---
-
-## 🚀 4. Next Steps
-* **Pairwise Interaction Analysis:** Develop advanced self-join queries to isolate patients specifically taking the high-risk pairs identified (e.g., Phenelzine + Fluoxetine) to statistically quantify the exact risk multiplier of the interaction.
-* **Demographic Stratification:** Segment the risk percentages by age and biological sex to determine if specific vulnerable populations (e.g., elderly patients) face disproportionately higher safety risks.
