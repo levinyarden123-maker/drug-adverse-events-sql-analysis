@@ -1,7 +1,5 @@
-# drug-adverse-events-sql-analysis
-SQL analysis of a clinical dataset to identify drug safety risks and adverse events
-
 # 📊 Drug Adverse Event Risk Analysis in a Polypharmacy Dataset
+SQL analysis of a clinical dataset to identify drug safety risks and adverse events
 
 ## 🎯 1. Background & Objective
 In healthcare data science and pharmacovigilance, monitoring drug safety is paramount—particularly in polypharmacy scenarios where patients concurrently take multiple medications. This project analyzes a clinical dataset of patient records to identify which medications carry the highest risk of adverse events (AE) and to surface potential high-risk drug-drug interactions for public health and regulatory insights.
